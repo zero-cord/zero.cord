@@ -1,0 +1,31 @@
+{
+  "name": "zero.cord",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zero-cord/zero.cord.git"
+  },
+  "keywords": [
+    "discord",
+    "discordapi",
+    "api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zero-cord/zero.cord/issues"
+  },
+  "homepage": "https://github.com/zero-cord/zero.cord#readme",
+  "devDependencies": {
+    "typescript": "^5.4.3"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "ws": "^8.16.0"
+  }
+}
