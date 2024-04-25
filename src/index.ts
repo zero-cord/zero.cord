@@ -3,15 +3,30 @@ import websocket from 'ws'
 
 const gatewayURL = "wss://gateway.discord.gg/?v=10&encoding=json";
 
+interface ClientOptions {
+    debug: boolean
+}
+
+export enum EnumEvent {
+    Raw = 'RAW',
+    Ready = 'READY',
+    MessageCreate = 'MESSAGE_CREATE',
+    GuildCreate = 'GUILD_CREATE',
+} 
+
 export default class Client extends EventEmitter {
     private Token: string | null
     private ws: websocket | null
+    private loggedIn: boolean
+    private _debug: boolean
 
-    constructor() {
+    constructor({ debug }: ClientOptions) {
         super()
 
         this.Token = ''
         this.ws = null
+        this.loggedIn = false
+        this._debug = debug
     }
 
     setToken(token: string) {
@@ -30,6 +45,26 @@ export default class Client extends EventEmitter {
         this.ws.on('message', (message: string) => {
             const data = JSON.parse(message);
 
+            console.log(data.op)
+
+            if (data.op == 0) {
+                if (data.t == EnumEvent.Ready) {
+                    this.emit(EnumEvent.Ready, data.d)
+                }
+
+                if (data.t == EnumEvent.MessageCreate) {
+                    this.emit(EnumEvent.MessageCreate, data.d)
+                }
+
+                if (data.t == EnumEvent.GuildCreate) {
+                    this.emit(EnumEvent.GuildCreate, data.d)
+                }
+            } 
+
+            if (data.op == 9) {
+
+            }
+
             if (data.op == 10) return this.heartbeat(data, data.d.heartbeat_interval)
 
             if (data.op == 11) {
@@ -46,11 +81,15 @@ export default class Client extends EventEmitter {
                     }
                 };
 
-                this.ws?.send(JSON.stringify(payload));
+                if (!this.loggedIn) {
+                    this.ws?.send(JSON.stringify(payload));
+
+                    this.loggedIn = true
+                }
                 return
             }
 
-            this.emit('raw', data)
+            this.emit(EnumEvent.Raw, data)
         });
 
         this.ws.on('close', (code, reason: Buffer) => {
@@ -63,16 +102,17 @@ export default class Client extends EventEmitter {
     }
 
     heartbeat(message: any, interval: number) {
+        this.sendHeartbeat(message)
+
+        setInterval(() => this.sendHeartbeat(message), interval)
+    }
+
+    sendHeartbeat(message: any) {
+        if (this._debug) console.log('[DEBUG] Sending heartbeat...')
+
         this.ws?.send(JSON.stringify({
             op: 1,
             d: message.s
         }))
-
-        setInterval(() => {
-            this.ws?.send(JSON.stringify({
-                op: 1,
-                d: message.s
-            }))
-        }, interval)
     }
 }
